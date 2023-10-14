@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.fragment.TrackingFragment"
+    android:background="@color/palette_1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="64dp">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="300dp">
+                <org.osmdroid.views.MapView
+                    android:id="@+id/mapview"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp" />
+                <TextView
+                    android:id="@+id/loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/palette_1"
+                    android:layout_centerInParent="true"
+                    android:text="Loading..."
+                    android:padding="8dp"
+                    android:textColor="@color/palette_3"/>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="00:00:00"
+                android:textSize="92sp"
+                android:textColor="@color/palette_3"
+                android:gravity="center"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Calories burned:"
+                android:textSize="16sp"
+                android:textColor="@color/palette_3"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                android:gravity="left"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total distance:"
+                android:textSize="16sp"
+                android:textColor="@color/palette_3"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                android:gravity="left"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Average speed:"
+                android:textSize="16sp"
+                android:textColor="@color/palette_3"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                android:gravity="left"/>
+
+        </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom"
+        android:layout_marginEnd="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="4dp"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/leftSideButton"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:text="@string/start"
+            android:background="@drawable/button_light"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+        <Button
+            android:id="@+id/rightSideButton"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:text="@string/pause"
+            android:background="@drawable/button_dark"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

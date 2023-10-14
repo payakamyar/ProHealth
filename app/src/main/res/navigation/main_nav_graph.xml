@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/runFragment">
+
+    <action android:id="@+id/action_global_trackingFragment"
+        app:destination="@+id/trackingFragment"
+        app:launchSingleTop="true"/>
+
+    <fragment
+        android:id="@+id/runFragment"
+        android:name="com.projekt.prohealth.ui.fragment.RunFragment"
+        android:label="fragment_run"
+        tools:layout="@layout/fragment_run" >
+        <action
+            android:id="@+id/action_runFragment_to_trackingFragment2"
+            app:destination="@id/trackingFragment"/>
+        <action
+            android:id="@+id/action_runFragment_to_statisticsFragment"
+            app:destination="@id/statisticsFragment"
+            app:enterAnim="@anim/slide_in_ltr"
+            app:popEnterAnim="@anim/slide_in_ltr"
+            app:exitAnim="@anim/slide_out_ltr"
+            app:popExitAnim="@anim/slide_out_ltr"/>
+        <action
+            android:id="@+id/action_runFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_in_ltr"
+            app:popEnterAnim="@anim/slide_in_ltr"
+            app:exitAnim="@anim/slide_out_ltr"
+            app:popExitAnim="@anim/slide_out_ltr" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.projekt.prohealth.ui.fragment.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_runFragment"
+            app:destination="@id/runFragment"
+            app:enterAnim="@anim/slide_in_rtl"
+            app:popEnterAnim="@anim/slide_in_rtl"
+            app:exitAnim="@anim/slide_out_rtl"
+            app:popExitAnim="@anim/slide_out_rtl" />
+        <action
+            android:id="@+id/action_settingsFragment_to_statisticsFragment"
+            app:destination="@id/statisticsFragment"
+            app:enterAnim="@anim/slide_in_rtl"
+            app:popEnterAnim="@anim/slide_in_rtl"
+            app:exitAnim="@anim/slide_out_rtl"
+            app:popExitAnim="@anim/slide_out_rtl" />
+    </fragment>
+    <fragment
+        android:id="@+id/statisticsFragment"
+        android:name="com.projekt.prohealth.ui.fragment.StatisticsFragment"
+        android:label="fragment_statistics"
+        tools:layout="@layout/fragment_statistics" >
+        <action
+            android:id="@+id/action_statisticsFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_in_ltr"
+            app:popEnterAnim="@anim/slide_in_ltr"
+            app:exitAnim="@anim/slide_out_ltr"
+            app:popExitAnim="@anim/slide_out_ltr" />
+        <action
+            android:id="@+id/action_statisticsFragment_to_runFragment"
+            app:destination="@id/runFragment"
+            app:enterAnim="@anim/slide_in_rtl"
+            app:popEnterAnim="@anim/slide_in_rtl"
+            app:exitAnim="@anim/slide_out_rtl"
+            app:popExitAnim="@anim/slide_out_rtl" />
+    </fragment>
+    <fragment
+        android:id="@+id/trackingFragment"
+        android:name="com.projekt.prohealth.ui.fragment.TrackingFragment"
+        android:label="fragment_tracking"
+        tools:layout="@layout/fragment_tracking" >
+        <action
+            android:id="@+id/action_trackingFragment_to_runFragment"
+            app:destination="@id/runFragment" />
+    </fragment>
+</navigation>
