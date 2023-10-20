@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.FragmentTrackingBinding
 import com.projekt.prohealth.service.TrackingService
@@ -29,6 +28,8 @@ import org.osmdroid.views.overlay.Marker
 @AndroidEntryPoint
 class TrackingFragment : Fragment() {
 
+    //TODO: the tracking spots, when the software is minimized, are lost.
+
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var binding: FragmentTrackingBinding
     private lateinit var locationManager: LocationManager
@@ -38,7 +39,7 @@ class TrackingFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =  FragmentTrackingBinding.inflate(inflater)
         setup()
         requestLocation()
@@ -107,7 +108,7 @@ class TrackingFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun handleTracking(){
         if (LocationPermission.checkLocationPermissions(requireContext())) {
-            binding.leftSideButton.setOnClickListener { it ->
+            binding.leftSideButton.setOnClickListener {
                 if(binding.leftSideButton.text == resources.getString(R.string.start)){
                     binding.leftSideButton.text = resources.getString(R.string.stop)
                     it.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)

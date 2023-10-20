@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.projekt.prohealth.R
+import com.projekt.prohealth.entity.TimeData
 import com.projekt.prohealth.ui.activity.MainActivity
 import com.projekt.prohealth.utility.Constants.ACTION_OPEN_TRACKING_FRAGMENT
 import com.projekt.prohealth.utility.Constants.ACTION_PAUSE_SERVICE
@@ -27,21 +28,44 @@ import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_ID
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_NAME
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_ID
 import com.projekt.prohealth.utility.LocationPermission
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class TrackingService: LifecycleService() {
+
+    //TODO: The notification actions aren't synced with the UI. Change it so when an Action is clicked on the notification, the UI change as well.
 
     companion object{
         var isTracking = MutableLiveData<Boolean>()
         var route = MutableLiveData<MutableList<MutableList<LatLng>>>()
+        var time = MutableLiveData<TimeData>()
     }
     private var isFirstRun = true
     private lateinit var drawPathLocationListener: LocationListener
     private lateinit var locationManager: LocationManager
+    private lateinit var notificationBuilder:NotificationCompat.Builder
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var resumeAction: NotificationCompat.Action
+    private lateinit var pauseAction: NotificationCompat.Action
+    private lateinit var stopAction: NotificationCompat.Action
 
     override fun onCreate() {
         super.onCreate()
         isTracking.value = false
         route.postValue(mutableListOf())
+        time.value = TimeData(0,"00:00:00")
+        resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
+                        PendingIntent.getService(this,9876,
+                        Intent(this,TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }, FLAG_UPDATE_CURRENT))
+        pauseAction =  NotificationCompat.Action(R.drawable.ic_pause,"Pause",
+                        PendingIntent.getService(this,9875,
+                        Intent(this,TrackingService::class.java).apply { action = ACTION_PAUSE_SERVICE }, FLAG_UPDATE_CURRENT))
+        stopAction =  NotificationCompat.Action(R.drawable.ic_stop,"Stop",
+                        PendingIntent.getService(this,9874,
+                        Intent(this,TrackingService::class.java).apply { action = ACTION_STOP_SERVICE }, FLAG_UPDATE_CURRENT))
         drawPathLocationListener = LocationListener {
             val latitude = it.latitude
             val longitude = it.longitude
@@ -54,7 +78,6 @@ class TrackingService: LifecycleService() {
                     this.last().add(LatLng(latitude,longitude))
                 route.postValue(this)
             }
-            Log.i("TAG", "${route.value!!.last().last().latitude}")
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -69,12 +92,15 @@ class TrackingService: LifecycleService() {
                         startForegroundService()
                         isFirstRun = false
                     }
-                    if(!isTracking.value!!)
+                    if(!isTracking.value!!){
                         startTracking()
+                    }
                 }
                 ACTION_PAUSE_SERVICE -> {
-                    if(isTracking.value!!)
+                    if(isTracking.value!!){
                         stopTracking()
+                        updateNotificationActions(ACTION_PAUSE_SERVICE)
+                    }
                 }
                 ACTION_STOP_SERVICE -> {
                     stopTracking()
@@ -86,17 +112,19 @@ class TrackingService: LifecycleService() {
     }
 
     private fun startForegroundService(){
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             createNotificationChannel(notificationManager)
 
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+       notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setAutoCancel(false)
             .setOngoing(true)
             .setSmallIcon(R.drawable.ic_run)
             .setContentTitle("Tracking Run...")
             .setContentText("00:00:00")
             .setContentIntent(getMainActivity())
+
+
 
         startForeground(NOTIFICATION_ID,notificationBuilder.build())
     }
@@ -105,14 +133,57 @@ class TrackingService: LifecycleService() {
     private fun startTracking(){
         if(LocationPermission.checkLocationPermissions(this)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,100,0f,drawPathLocationListener)
+            startTimer()
         }
     }
 
     private fun stopTracking(){
         isTracking.value = false
+        updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
         locationManager.removeUpdates(drawPathLocationListener)
     }
 
+    @SuppressLint("SuspiciousIndentation")
+    private fun startTimer(){
+        CoroutineScope(Dispatchers.Main).launch {
+            while (isTracking.value!!){
+                delay(1000)
+                time.postValue(TimeData(time.value!!.second+1,formatTime(time.value!!.second)))
+                updateNotificationTimer(time.value!!.formattedTimeToString)
+                updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
+            Log.i("working", "startTimer: ")
+            }}
+        Log.i("istracking", "${isTracking.value!!}")
+    }
+
+    private fun updateNotificationTimer(text:String){
+        notificationBuilder.setContentText(text)
+        notificationManager.notify(NOTIFICATION_ID,notificationBuilder.build())
+    }
+
+    private fun updateNotificationActions(action:String){
+        notificationBuilder.clearActions()
+        when(action){
+            ACTION_START_OR_RESUME_SERVICE -> {
+                notificationBuilder.addAction(pauseAction)
+            }
+            ACTION_PAUSE_SERVICE -> {
+                notificationBuilder.addAction(resumeAction)
+            }
+        }
+        notificationBuilder.addAction(stopAction)
+        notificationManager.notify(NOTIFICATION_ID,notificationBuilder.build())
+    }
+
+    private fun formatTime(timeInSec:Int):String{
+        if(timeInSec > 0){
+            val sec = timeInSec % 60
+            val min = (timeInSec / 60) % 60
+            val hour = (timeInSec / 3600)
+            return "${if (hour<10) "0$hour" else "$hour"}:${if (min<10) "0$min" else "$min"}:${if(sec<10) "0$sec" else "$sec"}"
+        }
+        return ""
+    }
     private fun getMainActivity() = PendingIntent.getActivity(
         this,
         0,

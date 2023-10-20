@@ -7,6 +7,28 @@
     tools:context=".ui.fragment.SplashActivity"
     android:background="@color/palette_2">
 
-
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@drawable/ic_run"
+        app:backgroundTint="@color/white"
+        android:layout_gravity="center"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pro Health"
+        android:layout_gravity="center"
+        android:textSize="32sp"
+        android:textColor="@color/white"/>
+</LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
