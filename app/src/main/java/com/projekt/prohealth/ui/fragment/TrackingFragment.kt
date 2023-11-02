@@ -6,12 +6,14 @@ import android.content.Intent
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.gms.maps.model.LatLng
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.FragmentTrackingBinding
 import com.projekt.prohealth.service.TrackingService
@@ -28,9 +30,12 @@ import org.osmdroid.views.overlay.Marker
 @AndroidEntryPoint
 class TrackingFragment : Fragment() {
 
-    //TODO: the tracking spots, when the software is minimized, are lost.
 
     private val mainViewModel: MainViewModel by viewModels()
+    private var missingIndexStart = -1
+    private var missingIndexEnd = -1
+    private var missingPathIndexStart = -1
+    private var missingPathIndexEnd = -1
     private lateinit var binding: FragmentTrackingBinding
     private lateinit var locationManager: LocationManager
     private lateinit var setMarkerLocationListener: LocationListener
@@ -44,6 +49,23 @@ class TrackingFragment : Fragment() {
         setup()
         requestLocation()
         return binding.root
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if(missingPathIndexStart != -1 && TrackingService.isServiceRunning){
+            missingIndexEnd = TrackingService.route.value!!.last().size -1
+            missingPathIndexEnd = TrackingService.route.value!!.size -1
+            if(missingPathIndexStart == missingIndexEnd)
+                for(spot in missingIndexStart .. missingIndexEnd)
+                    drawPathOnMap(TrackingService.route.value!!.last()[spot].latitude,TrackingService.route.value!!.last()[spot].longitude)
+            else
+                for(path in missingPathIndexStart .. missingPathIndexEnd)
+                    for(spot in missingIndexStart .. missingIndexEnd)
+                        drawPathOnMap(TrackingService.route.value!![path][spot].latitude,TrackingService.route.value!![path][spot].longitude)
+
+        }
+
     }
 
     private fun setup(){
@@ -60,7 +82,7 @@ class TrackingFragment : Fragment() {
             setMultiTouchControls(true)
             this.controller.setZoom(2.0)
         }
-        handleTracking()
+        handleDataFromService()
 
         TrackingService.isTracking.observe(viewLifecycleOwner) { isTracking ->
             if (isTracking)
@@ -91,7 +113,7 @@ class TrackingFragment : Fragment() {
         marker.icon = ContextCompat.getDrawable(requireContext(),R.drawable.ic_location)
         if(mapView.overlayManager.size > 0)
             mapView.overlayManager.removeAt(0)
-
+        Log.i("TAG", "setMarkerOnMap: ")
         mapView.overlayManager.add(0,marker)
 
     }
@@ -106,21 +128,21 @@ class TrackingFragment : Fragment() {
 
 
     @SuppressLint("MissingPermission")
-    private fun handleTracking(){
+    private fun handleDataFromService(){
         if (LocationPermission.checkLocationPermissions(requireContext())) {
+            TrackingService.currentState.observe(viewLifecycleOwner){
+                when(it){
+                    Constants.ACTION_STOP_SERVICE -> showStopActionButtons()
+                    Constants.ACTION_START_OR_RESUME_SERVICE -> showStartActionButtons()
+                    Constants.ACTION_PAUSE_SERVICE -> showPauseActionButtons()
+                }
+            }
             binding.leftSideButton.setOnClickListener {
                 if(binding.leftSideButton.text == resources.getString(R.string.start)){
-                    binding.leftSideButton.text = resources.getString(R.string.stop)
-                    it.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
-                    binding.rightSideButton.visibility = View.VISIBLE
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
                     )
-
                 } else{
-                    binding.leftSideButton.text = resources.getString(R.string.start)
-                    it.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_light)
-                    binding.rightSideButton.visibility = View.GONE
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_STOP_SERVICE}
                     )
@@ -131,9 +153,7 @@ class TrackingFragment : Fragment() {
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_PAUSE_SERVICE }
                     )
-                    binding.rightSideButton.text = resources.getString(R.string.resume)
                 }else{
-                    binding.rightSideButton.text = resources.getString(R.string.pause)
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
                     )
@@ -146,6 +166,24 @@ class TrackingFragment : Fragment() {
 
     }
 
+    private fun showStartActionButtons(){
+        binding.leftSideButton.text = resources.getString(R.string.stop)
+        binding.leftSideButton.text = resources.getString(R.string.pause)
+        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
+        binding.rightSideButton.visibility = View.VISIBLE
+    }
+    private fun showPauseActionButtons(){
+        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
+        binding.rightSideButton.visibility = View.VISIBLE
+        binding.leftSideButton.text = resources.getString(R.string.stop)
+        binding.rightSideButton.text = resources.getString(R.string.resume)
+    }
+    private fun showStopActionButtons(){
+        binding.leftSideButton.text = resources.getString(R.string.start)
+        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_light)
+        binding.rightSideButton.visibility = View.GONE
+    }
+
     override fun onResume() {
         super.onResume()
         mapView.onResume()
@@ -154,6 +192,14 @@ class TrackingFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         mapView.onPause()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if(TrackingService.isServiceRunning){
+            missingPathIndexStart = TrackingService.route.value!!.size - 1
+            missingIndexStart = TrackingService.route.value!!.last().size - 1
+        }
     }
 
     override fun onDestroy() {

@@ -28,20 +28,24 @@ import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_ID
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_NAME
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_ID
 import com.projekt.prohealth.utility.LocationPermission
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class TrackingService: LifecycleService() {
 
-    //TODO: The notification actions aren't synced with the UI. Change it so when an Action is clicked on the notification, the UI change as well.
+    //DONE: The notification actions aren't synced with the UI. Change it so when an Action is clicked on the notification, the UI change as well.
 
     companion object{
+        var isServiceRunning = false
         var isTracking = MutableLiveData<Boolean>()
         var route = MutableLiveData<MutableList<MutableList<LatLng>>>()
         var time = MutableLiveData<TimeData>()
+        var currentState = MutableLiveData<String>()
     }
     private var isFirstRun = true
     private lateinit var drawPathLocationListener: LocationListener
@@ -55,7 +59,9 @@ class TrackingService: LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         isTracking.value = false
+        isServiceRunning = true
         route.postValue(mutableListOf())
+        currentState.postValue(ACTION_STOP_SERVICE)
         time.value = TimeData(0,"00:00:00")
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
@@ -94,16 +100,19 @@ class TrackingService: LifecycleService() {
                     }
                     if(!isTracking.value!!){
                         startTracking()
+                        currentState.postValue(ACTION_START_OR_RESUME_SERVICE)
                     }
                 }
                 ACTION_PAUSE_SERVICE -> {
                     if(isTracking.value!!){
                         stopTracking()
                         updateNotificationActions(ACTION_PAUSE_SERVICE)
+                        currentState.postValue(ACTION_PAUSE_SERVICE)
                     }
                 }
                 ACTION_STOP_SERVICE -> {
                     stopTracking()
+                    currentState.postValue(ACTION_STOP_SERVICE)
                     stopSelf()
                 }
             }
@@ -206,6 +215,7 @@ class TrackingService: LifecycleService() {
     override fun onDestroy() {
         super.onDestroy()
         isTracking.value = false
+        isServiceRunning = false
         locationManager.removeUpdates(drawPathLocationListener)
     }
 }
