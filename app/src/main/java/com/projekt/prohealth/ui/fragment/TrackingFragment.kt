@@ -87,9 +87,13 @@ class TrackingFragment : Fragment() {
         TrackingService.isTracking.observe(viewLifecycleOwner) { isTracking ->
             if (isTracking)
                 TrackingService.route.observe(viewLifecycleOwner) {
-                    if (it.last().isNotEmpty())
+                    if (it.isNotEmpty() && it.last().isNotEmpty())
                         drawPathOnMap(it.last().last().latitude, it.last().last().longitude)
                 }
+        }
+
+        TrackingService.time.observe(viewLifecycleOwner){
+            binding.timerTextview.text = it.formattedTimeToString
         }
     }
 
@@ -168,7 +172,7 @@ class TrackingFragment : Fragment() {
 
     private fun showStartActionButtons(){
         binding.leftSideButton.text = resources.getString(R.string.stop)
-        binding.leftSideButton.text = resources.getString(R.string.pause)
+        binding.rightSideButton.text = resources.getString(R.string.pause)
         binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
         binding.rightSideButton.visibility = View.VISIBLE
     }

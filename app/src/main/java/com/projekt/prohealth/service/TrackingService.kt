@@ -38,7 +38,6 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class TrackingService: LifecycleService() {
 
-    //DONE: The notification actions aren't synced with the UI. Change it so when an Action is clicked on the notification, the UI change as well.
 
     companion object{
         var isServiceRunning = false
@@ -60,8 +59,6 @@ class TrackingService: LifecycleService() {
         super.onCreate()
         isTracking.value = false
         isServiceRunning = true
-        route.postValue(mutableListOf())
-        currentState.postValue(ACTION_STOP_SERVICE)
         time.value = TimeData(0,"00:00:00")
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
@@ -75,14 +72,17 @@ class TrackingService: LifecycleService() {
         drawPathLocationListener = LocationListener {
             val latitude = it.latitude
             val longitude = it.longitude
-            route.value!!.apply {
+            route.value?.let {r->
                 if(!isTracking.value!!){
-                    this.add(mutableListOf())
-                    this.last().add(LatLng(latitude,longitude))
+                    r.add(mutableListOf())
+                    r.last().add(LatLng(latitude,longitude))
                     isTracking.value = true
                 }else
-                    this.last().add(LatLng(latitude,longitude))
-                route.postValue(this)
+                    r.last().add(LatLng(latitude,longitude))
+                route.postValue(r)
+            }.run {
+                route.value = mutableListOf()
+                route.value!!.add(mutableListOf())
             }
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -130,7 +130,7 @@ class TrackingService: LifecycleService() {
             .setOngoing(true)
             .setSmallIcon(R.drawable.ic_run)
             .setContentTitle("Tracking Run...")
-            .setContentText("00:00:00")
+            .setContentText(time.value!!.formattedTimeToString)
             .setContentIntent(getMainActivity())
 
 
@@ -142,13 +142,14 @@ class TrackingService: LifecycleService() {
     private fun startTracking(){
         if(LocationPermission.checkLocationPermissions(this)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,100,0f,drawPathLocationListener)
+            isTracking.value = true
+            updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
             startTimer()
         }
     }
 
     private fun stopTracking(){
         isTracking.value = false
-        updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
         locationManager.removeUpdates(drawPathLocationListener)
     }
 
@@ -157,10 +158,10 @@ class TrackingService: LifecycleService() {
         CoroutineScope(Dispatchers.Main).launch {
             while (isTracking.value!!){
                 delay(1000)
-                time.postValue(TimeData(time.value!!.second+1,formatTime(time.value!!.second)))
+                val newTime = (time.value!!.second)+1
+                time.value = TimeData(newTime,formatTime(newTime))
                 updateNotificationTimer(time.value!!.formattedTimeToString)
-                updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
-            Log.i("working", "startTimer: ")
+            Log.i("working", time.value!!.formattedTimeToString)
             }}
         Log.i("istracking", "${isTracking.value!!}")
     }
@@ -191,7 +192,7 @@ class TrackingService: LifecycleService() {
             val hour = (timeInSec / 3600)
             return "${if (hour<10) "0$hour" else "$hour"}:${if (min<10) "0$min" else "$min"}:${if(sec<10) "0$sec" else "$sec"}"
         }
-        return ""
+        return "00:00:00"
     }
     private fun getMainActivity() = PendingIntent.getActivity(
         this,

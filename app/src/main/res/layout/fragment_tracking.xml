@@ -31,12 +31,13 @@
             </RelativeLayout>
 
             <TextView
+                android:id="@+id/timer_textview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="00:00:00"
-                android:textSize="92sp"
                 android:textColor="@color/palette_3"
-                android:gravity="center"/>
+                android:textSize="92sp" />
 
             <TextView
                 android:layout_width="match_parent"
