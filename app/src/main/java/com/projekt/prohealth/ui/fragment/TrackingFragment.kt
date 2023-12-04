@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.FragmentTrackingBinding
 import com.projekt.prohealth.service.TrackingService
@@ -22,6 +23,7 @@ import com.projekt.prohealth.utility.LocationPermission
 import com.projekt.prohealth.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -34,8 +36,6 @@ class TrackingFragment : Fragment() {
     private val mainViewModel: MainViewModel by viewModels()
     private var missingIndexStart = -1
     private var missingIndexEnd = -1
-    private var missingPathIndexStart = -1
-    private var missingPathIndexEnd = -1
     private lateinit var binding: FragmentTrackingBinding
     private lateinit var locationManager: LocationManager
     private lateinit var setMarkerLocationListener: LocationListener
@@ -53,17 +53,10 @@ class TrackingFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        if(missingPathIndexStart != -1 && TrackingService.isServiceRunning){
-            missingIndexEnd = TrackingService.route.value!!.last().size -1
-            missingPathIndexEnd = TrackingService.route.value!!.size -1
-            if(missingPathIndexStart == missingIndexEnd)
-                for(spot in missingIndexStart .. missingIndexEnd)
-                    drawPathOnMap(TrackingService.route.value!!.last()[spot].latitude,TrackingService.route.value!!.last()[spot].longitude)
-            else
-                for(path in missingPathIndexStart .. missingPathIndexEnd)
-                    for(spot in missingIndexStart .. missingIndexEnd)
-                        drawPathOnMap(TrackingService.route.value!![path][spot].latitude,TrackingService.route.value!![path][spot].longitude)
-
+        if(missingIndexStart != -1 && TrackingService.isServiceRunning){
+            missingIndexEnd = TrackingService.route.value!!.size -1
+            for(spot in missingIndexStart .. missingIndexEnd)
+                drawPathOnMap(TrackingService.route.value!!.last().latitude,TrackingService.route.value!!.last().longitude)
         }
 
     }
@@ -85,11 +78,15 @@ class TrackingFragment : Fragment() {
         handleDataFromService()
 
         TrackingService.isTracking.observe(viewLifecycleOwner) { isTracking ->
-            if (isTracking)
+            if (isTracking){
                 TrackingService.route.observe(viewLifecycleOwner) {
-                    if (it.isNotEmpty() && it.last().isNotEmpty())
-                        drawPathOnMap(it.last().last().latitude, it.last().last().longitude)
+                    if (it.isNotEmpty()){
+                        drawPathOnMap(it.last().latitude, it.last().longitude)
+                        Log.i("list", it.last().latitude.toString())
+                    }else
+                        Log.i("list", "empty ")
                 }
+            }
         }
 
         TrackingService.time.observe(viewLifecycleOwner){
@@ -117,9 +114,11 @@ class TrackingFragment : Fragment() {
         marker.icon = ContextCompat.getDrawable(requireContext(),R.drawable.ic_location)
         if(mapView.overlayManager.size > 0)
             mapView.overlayManager.removeAt(0)
-        Log.i("TAG", "setMarkerOnMap: ")
         mapView.overlayManager.add(0,marker)
+    }
 
+    private fun zoomOutToCoverAll(paths:MutableList<GeoPoint>){
+        val boundingBox = BoundingBox.fromGeoPointsSafe(paths)
     }
 
     private fun drawPathOnMap(latitude: Double, longitude: Double){
@@ -201,14 +200,14 @@ class TrackingFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         if(TrackingService.isServiceRunning){
-            missingPathIndexStart = TrackingService.route.value!!.size - 1
-            missingIndexStart = TrackingService.route.value!!.last().size - 1
+            missingIndexStart = TrackingService.route.value!!.size - 1
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         locationManager.removeUpdates(setMarkerLocationListener)
+        Log.i("Fragment", "onDestroy: ")
     }
 
 }

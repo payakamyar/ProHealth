@@ -31,9 +31,10 @@ import com.projekt.prohealth.utility.LocationPermission
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.osmdroid.util.GeoPoint
 
 @AndroidEntryPoint
 class TrackingService: LifecycleService() {
@@ -42,7 +43,7 @@ class TrackingService: LifecycleService() {
     companion object{
         var isServiceRunning = false
         var isTracking = MutableLiveData<Boolean>()
-        var route = MutableLiveData<MutableList<MutableList<LatLng>>>()
+        var route = MutableLiveData<MutableList<GeoPoint>>()
         var time = MutableLiveData<TimeData>()
         var currentState = MutableLiveData<String>()
     }
@@ -54,12 +55,15 @@ class TrackingService: LifecycleService() {
     private lateinit var resumeAction: NotificationCompat.Action
     private lateinit var pauseAction: NotificationCompat.Action
     private lateinit var stopAction: NotificationCompat.Action
+    private lateinit var timerJob:Job
 
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate() {
         super.onCreate()
         isTracking.value = false
         isServiceRunning = true
         time.value = TimeData(0,"00:00:00")
+        route.value = mutableListOf()
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
                         Intent(this,TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }, FLAG_UPDATE_CURRENT))
@@ -72,18 +76,10 @@ class TrackingService: LifecycleService() {
         drawPathLocationListener = LocationListener {
             val latitude = it.latitude
             val longitude = it.longitude
-            route.value?.let {r->
-                if(!isTracking.value!!){
-                    r.add(mutableListOf())
-                    r.last().add(LatLng(latitude,longitude))
+                if(!isTracking.value!!)
                     isTracking.value = true
-                }else
-                    r.last().add(LatLng(latitude,longitude))
-                route.postValue(r)
-            }.run {
-                route.value = mutableListOf()
-                route.value!!.add(mutableListOf())
-            }
+            route.value!!.add(GeoPoint(latitude,longitude))
+            route.postValue(route.value!!)
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -150,12 +146,13 @@ class TrackingService: LifecycleService() {
 
     private fun stopTracking(){
         isTracking.value = false
+        timerJob.cancel()
         locationManager.removeUpdates(drawPathLocationListener)
     }
 
     @SuppressLint("SuspiciousIndentation")
     private fun startTimer(){
-        CoroutineScope(Dispatchers.Main).launch {
+        timerJob = CoroutineScope(Dispatchers.Main).launch {
             while (isTracking.value!!){
                 delay(1000)
                 val newTime = (time.value!!.second)+1
@@ -217,6 +214,8 @@ class TrackingService: LifecycleService() {
         super.onDestroy()
         isTracking.value = false
         isServiceRunning = false
+        time.value = TimeData(0,formatTime(0))
+        notificationManager.cancel(NOTIFICATION_ID)
         locationManager.removeUpdates(drawPathLocationListener)
     }
 }
