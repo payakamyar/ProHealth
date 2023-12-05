@@ -56,7 +56,7 @@ class TrackingFragment : Fragment() {
         if(missingIndexStart != -1 && TrackingService.isServiceRunning){
             missingIndexEnd = TrackingService.route.value!!.size -1
             for(spot in missingIndexStart .. missingIndexEnd)
-                drawPathOnMap(TrackingService.route.value!!.last().latitude,TrackingService.route.value!!.last().longitude)
+                drawPathOnMap(TrackingService.route.value!![spot].latitude,TrackingService.route.value!![spot].longitude)
         }
 
     }
