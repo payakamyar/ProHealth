@@ -7,7 +7,7 @@
     tools:context=".ui.fragment.TrackingFragment"
     android:background="@color/palette_1">
 
-        <LinearLayout
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -38,36 +38,95 @@
                 android:text="00:00:00"
                 android:textColor="@color/palette_3"
                 android:textSize="92sp" />
-
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Calories burned:"
+                android:orientation="horizontal"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calories burned: "
+                    android:textSize="16sp"
+                    android:textColor="@color/palette_3"
+                    android:gravity="left"/>
+                <TextView
+                    android:id="@+id/calories_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="16sp"
+                    android:textColor="@color/palette_5"
+                    android:gravity="left"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" Cal"
+                    android:textSize="16sp"
+                    android:textColor="@color/palette_5"
+                    android:gravity="left"/>
+            </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginLeft="24dp"
+            android:layout_marginRight="24dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total distance: "
                 android:textSize="16sp"
                 android:textColor="@color/palette_3"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
                 android:gravity="left"/>
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/distance_tv"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Total distance:"
+                android:text="0.0"
                 android:textSize="16sp"
-                android:textColor="@color/palette_3"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
+                android:textColor="@color/palette_5"
                 android:gravity="left"/>
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Average speed:"
+                android:text=" Meters"
                 android:textSize="16sp"
-                android:textColor="@color/palette_3"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
+                android:textColor="@color/palette_5"
                 android:gravity="left"/>
-
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginLeft="24dp"
+            android:layout_marginRight="24dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Average speed: "
+                android:textSize="16sp"
+                android:textColor="@color/palette_3"
+                android:gravity="left"/>
+            <TextView
+                android:id="@+id/speed_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0"
+                android:textSize="16sp"
+                android:textColor="@color/palette_5"
+                android:gravity="left"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" KM/H"
+                android:textSize="16sp"
+                android:textColor="@color/palette_5"
+                android:gravity="left"/>
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

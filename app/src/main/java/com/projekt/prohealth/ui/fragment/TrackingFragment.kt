@@ -75,22 +75,30 @@ class TrackingFragment : Fragment() {
             setMultiTouchControls(true)
             this.controller.setZoom(2.0)
         }
-        handleDataFromService()
+        binding.leftSideButton.setOnClickListener {
+            Log.i("clicked?", "handleDataFromService: ")
+            requireContext().startService(
+                Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
+            )
+        }
 
-        TrackingService.isTracking.observe(viewLifecycleOwner) { isTracking ->
-            if (isTracking){
+        TrackingService.currentState.observe(viewLifecycleOwner) { state->
+            handleDataFromService(state)
+            if (state == Constants.ACTION_START_OR_RESUME_SERVICE){
                 TrackingService.route.observe(viewLifecycleOwner) {
                     if (it.isNotEmpty()){
                         drawPathOnMap(it.last().latitude, it.last().longitude)
                         Log.i("list", it.last().latitude.toString())
-                    }else
-                        Log.i("list", "empty ")
+                    }
                 }
             }
         }
 
         TrackingService.time.observe(viewLifecycleOwner){
-            binding.timerTextview.text = it.formattedTimeToString
+            binding.timerTextview.text = TrackingService.time.value!!.formattedTimeToString
+            binding.caloriesTv.text = TrackingService.caloriesBurned.toString()
+            binding.distanceTv.text = String.format("%.2f", TrackingService.distance)
+            binding.speedTv.text = String.format("%.2f", TrackingService.averageSpeed)
         }
     }
 
@@ -131,15 +139,14 @@ class TrackingFragment : Fragment() {
 
 
     @SuppressLint("MissingPermission")
-    private fun handleDataFromService(){
+    private fun handleDataFromService(state:String){
         if (LocationPermission.checkLocationPermissions(requireContext())) {
-            TrackingService.currentState.observe(viewLifecycleOwner){
-                when(it){
+                when(state){
                     Constants.ACTION_STOP_SERVICE -> showStopActionButtons()
                     Constants.ACTION_START_OR_RESUME_SERVICE -> showStartActionButtons()
                     Constants.ACTION_PAUSE_SERVICE -> showPauseActionButtons()
                 }
-            }
+
             binding.leftSideButton.setOnClickListener {
                 if(binding.leftSideButton.text == resources.getString(R.string.start)){
                     requireContext().startService(

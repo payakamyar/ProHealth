@@ -1,6 +1,7 @@
 package com.projekt.prohealth.service
 
 import android.annotation.SuppressLint
+import android.app.MediaRouteActionProvider
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
@@ -15,6 +16,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.projekt.prohealth.R
@@ -42,10 +44,12 @@ class TrackingService: LifecycleService() {
 
     companion object{
         var isServiceRunning = false
-        var isTracking = MutableLiveData<Boolean>()
+        var currentState = MutableLiveData<String>()
         var route = MutableLiveData<MutableList<GeoPoint>>()
         var time = MutableLiveData<TimeData>()
-        var currentState = MutableLiveData<String>()
+        var distance:Double = 0.0
+        var averageSpeed:Double = 0.0
+        var caloriesBurned = 0
     }
     private var isFirstRun = true
     private lateinit var drawPathLocationListener: LocationListener
@@ -60,10 +64,10 @@ class TrackingService: LifecycleService() {
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate() {
         super.onCreate()
-        isTracking.value = false
         isServiceRunning = true
-        time.value = TimeData(0,"00:00:00")
         route.value = mutableListOf()
+        currentState.value = ACTION_STOP_SERVICE
+        time.value = TimeData(0,formatTime(0))
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
                         Intent(this,TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }, FLAG_UPDATE_CURRENT))
@@ -76,34 +80,43 @@ class TrackingService: LifecycleService() {
         drawPathLocationListener = LocationListener {
             val latitude = it.latitude
             val longitude = it.longitude
-                if(!isTracking.value!!)
-                    isTracking.value = true
-            route.value!!.add(GeoPoint(latitude,longitude))
+            GeoPoint(latitude,longitude).apply {
+                if(route.value!!.isNotEmpty()){
+                    Log.i("dist-last", "${this.distanceToAsDouble(route.value!!.last())}")
+                    Log.i("dist-first", "${this.distanceToAsDouble(route.value!!.first())}")
+                    distance += this.distanceToAsDouble(route.value!!.last())
+                    caloriesBurned = calculateCaloriesBurned()
+                    averageSpeed = (distance.div(1000.0)).div(time.value!!.second.toDouble().div(3600.0))
+                }
+                route.value!!.add(this)
+            }
+            currentState.value = ACTION_START_OR_RESUME_SERVICE
             route.postValue(route.value!!)
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             when(it.action){
                 ACTION_START_OR_RESUME_SERVICE -> {
-                    Log.i("tracking", "${isTracking.value}")
                     if(isFirstRun){
                         startForegroundService()
                         isFirstRun = false
                     }
-                    if(!isTracking.value!!){
-                        startTracking()
-                        currentState.postValue(ACTION_START_OR_RESUME_SERVICE)
+                    if(currentState.value!! != ACTION_START_OR_RESUME_SERVICE){
+                            startTracking()
                     }
+
                 }
                 ACTION_PAUSE_SERVICE -> {
-                    if(isTracking.value!!){
-                        stopTracking()
-                        updateNotificationActions(ACTION_PAUSE_SERVICE)
+                    Log.i("in service", "action acknowledged?")
+                    Log.i("state?", currentState.value!!)
+                    if(currentState.value!! == ACTION_START_OR_RESUME_SERVICE){
+                        Log.i("in service", "inside if")
                         currentState.postValue(ACTION_PAUSE_SERVICE)
+                        updateNotificationActions(ACTION_PAUSE_SERVICE)
+                        stopTracking()
                     }
                 }
                 ACTION_STOP_SERVICE -> {
@@ -138,14 +151,13 @@ class TrackingService: LifecycleService() {
     private fun startTracking(){
         if(LocationPermission.checkLocationPermissions(this)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,100,0f,drawPathLocationListener)
-            isTracking.value = true
+            currentState.postValue(ACTION_START_OR_RESUME_SERVICE)
             updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
             startTimer()
         }
     }
 
     private fun stopTracking(){
-        isTracking.value = false
         timerJob.cancel()
         locationManager.removeUpdates(drawPathLocationListener)
     }
@@ -153,14 +165,21 @@ class TrackingService: LifecycleService() {
     @SuppressLint("SuspiciousIndentation")
     private fun startTimer(){
         timerJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isTracking.value!!){
+            while (currentState.value!! == ACTION_START_OR_RESUME_SERVICE){
                 delay(1000)
                 val newTime = (time.value!!.second)+1
                 time.value = TimeData(newTime,formatTime(newTime))
                 updateNotificationTimer(time.value!!.formattedTimeToString)
             Log.i("working", time.value!!.formattedTimeToString)
             }}
-        Log.i("istracking", "${isTracking.value!!}")
+    }
+
+    private fun calculateCaloriesBurned():Int{
+        if(time.value!!.second != 0 && averageSpeed > 0){
+        val met = (3.5 + (0.1 * averageSpeed.toInt()))
+        return  met.times(80).times(time.value!!.second.div(60)).toInt()
+        }
+        return 0
     }
 
     private fun updateNotificationTimer(text:String){
@@ -212,9 +231,12 @@ class TrackingService: LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        isTracking.value = false
+        currentState.value = ACTION_STOP_SERVICE
         isServiceRunning = false
         time.value = TimeData(0,formatTime(0))
+        distance = 0.0
+        averageSpeed = 0.0
+        caloriesBurned = 0
         notificationManager.cancel(NOTIFICATION_ID)
         locationManager.removeUpdates(drawPathLocationListener)
     }
