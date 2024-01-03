@@ -14,7 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 
-object LocationPermission {
+object Utilities {
 
     private lateinit var activityResultLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var fragment: Fragment
@@ -58,11 +58,9 @@ object LocationPermission {
             (ActivityCompat.checkSelfPermission(context,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED))
             return false
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            (ActivityCompat.checkSelfPermission(context,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED))
-            return false
-        return true
+        return !(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                (ActivityCompat.checkSelfPermission(context,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED))
     }
     private fun requestPermissions(permissions:Array<String>){
         activityResultLauncher.launch(permissions)
@@ -76,4 +74,15 @@ object LocationPermission {
                     Uri.parse("package:${fragment.requireActivity().packageName}")))
             }
             .setNegativeButton("Cancel",null)
+
+
+    fun formatTime(timeInSec:Int):String{
+        if(timeInSec > 0){
+            val sec = timeInSec % 60
+            val min = (timeInSec / 60) % 60
+            val hour = (timeInSec / 3600)
+            return "${if (hour<10) "0$hour" else "$hour"}:${if (min<10) "0$min" else "$min"}:${if(sec<10) "0$sec" else "$sec"}"
+        }
+        return "00:00:00"
+    }
 }

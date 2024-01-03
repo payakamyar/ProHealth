@@ -6,4 +6,7 @@
     <string name="start">Start</string>
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>
+    <string name="save">Save</string>
+    <string name="discard">Discard</string>
+    <string name="or_resume">Or continue your run...</string>
 </resources>

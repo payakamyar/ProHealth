@@ -12,4 +12,6 @@
     <color name="palette_3">#7981B9</color>
     <color name="palette_4">#C69749</color>
     <color name="palette_5">#A4A7BC</color>
+    <color name="warning">#F96666</color>
+    <color name="safe">#BCE29E</color>
 </resources>

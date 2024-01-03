@@ -1,6 +1,7 @@
 package com.projekt.prohealth.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
 import com.projekt.prohealth.db.RunDao
 import com.projekt.prohealth.db.RunDatabase
@@ -30,5 +31,10 @@ object AppModule {
     @Singleton
     @Provides
     fun provideRunDao(db: RunDatabase) = db.getRunDao()
+
+    @Singleton
+    @Provides
+    fun provideSharedPreferences(@ApplicationContext context: Context):SharedPreferences =
+        context.getSharedPreferences(Constants.SHARED_PREFERENCES_NAME,Context.MODE_PRIVATE)
 
 }

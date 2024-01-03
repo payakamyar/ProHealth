@@ -3,6 +3,8 @@ package com.projekt.prohealth.ui.fragment
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
@@ -13,13 +15,12 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.FragmentTrackingBinding
 import com.projekt.prohealth.service.TrackingService
 import com.projekt.prohealth.utility.Constants
-import com.projekt.prohealth.utility.LocationPermission
+import com.projekt.prohealth.utility.Utilities
 import com.projekt.prohealth.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -51,6 +52,11 @@ class TrackingFragment : Fragment() {
         return binding.root
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        requireActivity().findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.GONE
+    }
+
     override fun onStart() {
         super.onStart()
         if(missingIndexStart != -1 && TrackingService.isServiceRunning){
@@ -76,14 +82,22 @@ class TrackingFragment : Fragment() {
             this.controller.setZoom(2.0)
         }
         binding.leftSideButton.setOnClickListener {
-            Log.i("clicked?", "handleDataFromService: ")
+            if(binding.leftSideButton.text == getString(R.string.start))
+                requireContext().startService(
+                Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
+                )
+        }
+
+        binding.continueRun.setOnClickListener {
             requireContext().startService(
                 Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
             )
+            requestLocation()
+            it.visibility = View.GONE
         }
 
         TrackingService.currentState.observe(viewLifecycleOwner) { state->
-            handleDataFromService(state)
+            handleServiceStates(state)
             if (state == Constants.ACTION_START_OR_RESUME_SERVICE){
                 TrackingService.route.observe(viewLifecycleOwner) {
                     if (it.isNotEmpty()){
@@ -104,8 +118,8 @@ class TrackingFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocation(){
-        if (!LocationPermission.checkLocationPermissions(requireContext())) {
-            LocationPermission.handleLocationPermissions(this)
+        if (!Utilities.checkLocationPermissions(requireContext())) {
+            Utilities.handleLocationPermissions(this)
             return
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,2000,0f,setMarkerLocationListener)
@@ -115,6 +129,7 @@ class TrackingFragment : Fragment() {
     private fun setMarkerOnMap(latitude: Double, longitude: Double) {
         if(binding.loading.visibility == View.VISIBLE){
             binding.loading.visibility = View.GONE
+            binding.leftSideButton.isEnabled = true
             mapView.controller.setZoom(17.0)
         }
         val marker = Marker(mapView)
@@ -125,8 +140,23 @@ class TrackingFragment : Fragment() {
         mapView.overlayManager.add(0,marker)
     }
 
-    private fun zoomOutToCoverAll(paths:MutableList<GeoPoint>){
-        val boundingBox = BoundingBox.fromGeoPointsSafe(paths)
+    private fun takeSnapShotFromMap():Bitmap{
+        val bitmap = Bitmap.createBitmap(mapView.width, mapView.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        mapView.draw(canvas)
+        return bitmap
+    }
+
+    private fun zoomOutToCoverAll(){
+        val boundingBox = BoundingBox.fromGeoPointsSafe(TrackingService.route.value)
+        val center = boundingBox.centerWithDateLine
+        mapView.zoomToBoundingBox(boundingBox,true)
+        mapView.controller.setCenter(center)
+        locationManager.removeUpdates(setMarkerLocationListener)
+        try{
+        mapView.overlayManager.removeAt(0)
+        }catch (e:Exception){
+            Log.e("overlay", "zoomOutToCoverAll: NOT FOUND!", ) }
     }
 
     private fun drawPathOnMap(latitude: Double, longitude: Double){
@@ -139,59 +169,65 @@ class TrackingFragment : Fragment() {
 
 
     @SuppressLint("MissingPermission")
-    private fun handleDataFromService(state:String){
-        if (LocationPermission.checkLocationPermissions(requireContext())) {
+    private fun handleServiceStates(state:String){
+        if (Utilities.checkLocationPermissions(requireContext())) {
                 when(state){
-                    Constants.ACTION_STOP_SERVICE -> showStopActionButtons()
+                    Constants.ACTION_DEEP_PAUSE_SERVICE -> showDeepPauseActionButtons()
                     Constants.ACTION_START_OR_RESUME_SERVICE -> showStartActionButtons()
                     Constants.ACTION_PAUSE_SERVICE -> showPauseActionButtons()
                 }
 
             binding.leftSideButton.setOnClickListener {
-                if(binding.leftSideButton.text == resources.getString(R.string.start)){
+                if(binding.leftSideButton.text == resources.getString(R.string.start) || binding.leftSideButton.text == resources.getString(R.string.resume)){
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
                     )
-                } else{
-                    requireContext().startService(
-                        Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_STOP_SERVICE}
-                    )
-                }
-            }
-            binding.rightSideButton.setOnClickListener {
-                if(binding.rightSideButton.text == resources.getString(R.string.pause)){
+                } else if(binding.leftSideButton.text == resources.getString(R.string.pause)){
                     requireContext().startService(
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_PAUSE_SERVICE }
                     )
-                }else{
+                } else{
+                    //save here
+                }
+            }
+            binding.rightSideButton.setOnClickListener {
+                if(binding.rightSideButton.text == resources.getString(R.string.stop)){
                     requireContext().startService(
-                        Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_START_OR_RESUME_SERVICE }
+                        Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_DEEP_PAUSE_SERVICE}
                     )
+                } else{
+                    //discard here
                 }
             }
         }
         else{
-            LocationPermission.handleLocationPermissions(this)
+            Utilities.handleLocationPermissions(this)
         }
 
     }
 
     private fun showStartActionButtons(){
-        binding.leftSideButton.text = resources.getString(R.string.stop)
-        binding.rightSideButton.text = resources.getString(R.string.pause)
-        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
-        binding.rightSideButton.visibility = View.VISIBLE
+        binding.apply {
+            leftSideButton.text = resources.getString(R.string.pause)
+            rightSideButton.text = resources.getString(R.string.stop)
+            rightSideButton.visibility = View.VISIBLE
+        }
     }
     private fun showPauseActionButtons(){
-        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_red)
-        binding.rightSideButton.visibility = View.VISIBLE
-        binding.leftSideButton.text = resources.getString(R.string.stop)
-        binding.rightSideButton.text = resources.getString(R.string.resume)
+        binding.apply {
+            leftSideButton.text = resources.getString(R.string.resume)
+            rightSideButton.text = resources.getString(R.string.stop)
+            rightSideButton.visibility = View.VISIBLE
+        }
     }
-    private fun showStopActionButtons(){
-        binding.leftSideButton.text = resources.getString(R.string.start)
-        binding.leftSideButton.background = ContextCompat.getDrawable(requireContext(),R.drawable.button_light)
-        binding.rightSideButton.visibility = View.GONE
+    private fun showDeepPauseActionButtons(){
+        binding.apply {
+            rightSideButton.visibility = View.VISIBLE
+            leftSideButton.text = resources.getString(R.string.save)
+            rightSideButton.text = resources.getString(R.string.discard)
+            continueRun.visibility = View.VISIBLE
+        }
+        zoomOutToCoverAll()
     }
 
     override fun onResume() {
@@ -214,7 +250,8 @@ class TrackingFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         locationManager.removeUpdates(setMarkerLocationListener)
-        Log.i("Fragment", "onDestroy: ")
+        requireActivity().findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.VISIBLE
     }
+
 
 }

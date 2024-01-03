@@ -1,7 +1,6 @@
 package com.projekt.prohealth.service
 
 import android.annotation.SuppressLint
-import android.app.MediaRouteActionProvider
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
@@ -16,12 +15,11 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.android.gms.maps.model.LatLng
 import com.projekt.prohealth.R
 import com.projekt.prohealth.entity.TimeData
 import com.projekt.prohealth.ui.activity.MainActivity
+import com.projekt.prohealth.utility.Constants.ACTION_DEEP_PAUSE_SERVICE
 import com.projekt.prohealth.utility.Constants.ACTION_OPEN_TRACKING_FRAGMENT
 import com.projekt.prohealth.utility.Constants.ACTION_PAUSE_SERVICE
 import com.projekt.prohealth.utility.Constants.ACTION_START_OR_RESUME_SERVICE
@@ -29,7 +27,7 @@ import com.projekt.prohealth.utility.Constants.ACTION_STOP_SERVICE
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_ID
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_CHANNEL_NAME
 import com.projekt.prohealth.utility.Constants.NOTIFICATION_ID
-import com.projekt.prohealth.utility.LocationPermission
+import com.projekt.prohealth.utility.Utilities
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,14 +42,14 @@ class TrackingService: LifecycleService() {
 
     companion object{
         var isServiceRunning = false
-        var currentState = MutableLiveData<String>()
-        var route = MutableLiveData<MutableList<GeoPoint>>()
-        var time = MutableLiveData<TimeData>()
+        var currentState = MutableLiveData(ACTION_STOP_SERVICE)
+        var route = MutableLiveData<MutableList<GeoPoint>>(mutableListOf())
+        var time = MutableLiveData(TimeData(0,Utilities.formatTime(0)))
         var distance:Double = 0.0
         var averageSpeed:Double = 0.0
         var caloriesBurned = 0
     }
-    private var isFirstRun = true
+    private var isNotificationInitialized = false
     private lateinit var drawPathLocationListener: LocationListener
     private lateinit var locationManager: LocationManager
     private lateinit var notificationBuilder:NotificationCompat.Builder
@@ -65,9 +63,6 @@ class TrackingService: LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         isServiceRunning = true
-        route.value = mutableListOf()
-        currentState.value = ACTION_STOP_SERVICE
-        time.value = TimeData(0,formatTime(0))
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
                         Intent(this,TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }, FLAG_UPDATE_CURRENT))
@@ -100,9 +95,9 @@ class TrackingService: LifecycleService() {
         intent?.let {
             when(it.action){
                 ACTION_START_OR_RESUME_SERVICE -> {
-                    if(isFirstRun){
+                    if(!isNotificationInitialized){
                         startForegroundService()
-                        isFirstRun = false
+                        isNotificationInitialized = true
                     }
                     if(currentState.value!! != ACTION_START_OR_RESUME_SERVICE){
                             startTracking()
@@ -110,14 +105,16 @@ class TrackingService: LifecycleService() {
 
                 }
                 ACTION_PAUSE_SERVICE -> {
-                    Log.i("in service", "action acknowledged?")
-                    Log.i("state?", currentState.value!!)
                     if(currentState.value!! == ACTION_START_OR_RESUME_SERVICE){
-                        Log.i("in service", "inside if")
                         currentState.postValue(ACTION_PAUSE_SERVICE)
                         updateNotificationActions(ACTION_PAUSE_SERVICE)
                         stopTracking()
                     }
+                }
+                ACTION_DEEP_PAUSE_SERVICE -> {
+                        currentState.postValue(ACTION_DEEP_PAUSE_SERVICE)
+                        updateNotificationActions(ACTION_DEEP_PAUSE_SERVICE)
+                        stopTracking()
                 }
                 ACTION_STOP_SERVICE -> {
                     stopTracking()
@@ -149,7 +146,7 @@ class TrackingService: LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private fun startTracking(){
-        if(LocationPermission.checkLocationPermissions(this)){
+        if(Utilities.checkLocationPermissions(this)){
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,100,0f,drawPathLocationListener)
             currentState.postValue(ACTION_START_OR_RESUME_SERVICE)
             updateNotificationActions(ACTION_START_OR_RESUME_SERVICE)
@@ -168,7 +165,7 @@ class TrackingService: LifecycleService() {
             while (currentState.value!! == ACTION_START_OR_RESUME_SERVICE){
                 delay(1000)
                 val newTime = (time.value!!.second)+1
-                time.value = TimeData(newTime,formatTime(newTime))
+                time.value = TimeData(newTime,Utilities.formatTime(newTime))
                 updateNotificationTimer(time.value!!.formattedTimeToString)
             Log.i("working", time.value!!.formattedTimeToString)
             }}
@@ -192,24 +189,17 @@ class TrackingService: LifecycleService() {
         when(action){
             ACTION_START_OR_RESUME_SERVICE -> {
                 notificationBuilder.addAction(pauseAction)
+                notificationBuilder.addAction(stopAction)
             }
             ACTION_PAUSE_SERVICE -> {
                 notificationBuilder.addAction(resumeAction)
+                notificationBuilder.addAction(stopAction)
             }
+            ACTION_DEEP_PAUSE_SERVICE -> {}
         }
-        notificationBuilder.addAction(stopAction)
         notificationManager.notify(NOTIFICATION_ID,notificationBuilder.build())
     }
 
-    private fun formatTime(timeInSec:Int):String{
-        if(timeInSec > 0){
-            val sec = timeInSec % 60
-            val min = (timeInSec / 60) % 60
-            val hour = (timeInSec / 3600)
-            return "${if (hour<10) "0$hour" else "$hour"}:${if (min<10) "0$min" else "$min"}:${if(sec<10) "0$sec" else "$sec"}"
-        }
-        return "00:00:00"
-    }
     private fun getMainActivity() = PendingIntent.getActivity(
         this,
         0,
@@ -233,7 +223,7 @@ class TrackingService: LifecycleService() {
         super.onDestroy()
         currentState.value = ACTION_STOP_SERVICE
         isServiceRunning = false
-        time.value = TimeData(0,formatTime(0))
+        time.value = TimeData(0,Utilities.formatTime(0))
         distance = 0.0
         averageSpeed = 0.0
         caloriesBurned = 0
