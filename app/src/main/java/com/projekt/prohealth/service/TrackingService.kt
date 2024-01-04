@@ -35,6 +35,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 @AndroidEntryPoint
 class TrackingService: LifecycleService() {
@@ -62,7 +65,6 @@ class TrackingService: LifecycleService() {
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate() {
         super.onCreate()
-        isServiceRunning = true
         resumeAction =  NotificationCompat.Action(R.drawable.ic_play,"Resume",
                         PendingIntent.getService(this,9876,
                         Intent(this,TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }, FLAG_UPDATE_CURRENT))
@@ -76,13 +78,17 @@ class TrackingService: LifecycleService() {
             val latitude = it.latitude
             val longitude = it.longitude
             GeoPoint(latitude,longitude).apply {
-                if(route.value!!.isNotEmpty()){
-                    Log.i("dist-last", "${this.distanceToAsDouble(route.value!!.last())}")
-                    Log.i("dist-first", "${this.distanceToAsDouble(route.value!!.first())}")
+                if(route.value!!.isNotEmpty() && isServiceRunning){
                     distance += this.distanceToAsDouble(route.value!!.last())
                     caloriesBurned = calculateCaloriesBurned()
-                    averageSpeed = (distance.div(1000.0)).div(time.value!!.second.toDouble().div(3600.0))
+                    val avgSpeed = (distance.div(1000.0)).div(time.value!!.second.toDouble().div(3600.0))
+                    averageSpeed = if(avgSpeed.isInfinite() || avgSpeed.isNaN())
+                        0.00
+                    else
+                        avgSpeed
                 }
+                if(!isServiceRunning)
+                    isServiceRunning = true
                 route.value!!.add(this)
             }
             currentState.value = ACTION_START_OR_RESUME_SERVICE
@@ -155,6 +161,7 @@ class TrackingService: LifecycleService() {
     }
 
     private fun stopTracking(){
+        isServiceRunning = false
         timerJob.cancel()
         locationManager.removeUpdates(drawPathLocationListener)
     }

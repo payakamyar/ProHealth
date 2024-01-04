@@ -13,12 +13,17 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.projekt.prohealth.R
+import com.projekt.prohealth.adapter.RunAdapter
 import com.projekt.prohealth.databinding.FragmentRunBinding
 import com.projekt.prohealth.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,8 +32,11 @@ import dagger.hilt.android.AndroidEntryPoint
 class RunFragment : Fragment() {
 
     private val mainViewModel:MainViewModel by viewModels()
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var emptyTextView: TextView
     private lateinit var binding: FragmentRunBinding
     private lateinit var activityResultLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var runAdapter: RunAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -83,9 +91,28 @@ class RunFragment : Fragment() {
             .setNegativeButton("Cancel",null)
 
     private fun initViews(){
+        emptyTextView = binding.emptyTextview
+        recyclerView = binding.recyclerView
         binding.floating.setOnClickListener {
             findNavController().navigate(R.id.action_runFragment_to_trackingFragment2)
         }
+        setUpRecyclerView()
+        mainViewModel.getRuns().observe(viewLifecycleOwner){
+            if(it.isNotEmpty()){
+                emptyTextView.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+                runAdapter.setData(it)
+            }else {
+                emptyTextView.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun setUpRecyclerView(){
+        runAdapter = RunAdapter()
+        recyclerView.layoutManager = LinearLayoutManager(requireContext(),LinearLayoutManager.VERTICAL,false)
+        recyclerView.adapter = runAdapter
     }
 
 }

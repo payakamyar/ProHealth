@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.projekt.prohealth.db.repository.MainRepository
 import com.projekt.prohealth.entity.Run
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,7 +17,7 @@ class MainViewModel @Inject constructor():ViewModel() {
     @Inject
     lateinit var repository: MainRepository
 
-    fun insertRun(run:Run) = viewModelScope.launch {repository.insertRun(run)}
-    
+    fun insertRun(run:Run) = viewModelScope.launch(Dispatchers.IO) {repository.insertRun(run)}
+    fun getRuns():LiveData<List<Run>> = repository.getAllRunsSortedByDate()
 
 }

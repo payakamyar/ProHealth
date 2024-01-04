@@ -9,8 +9,8 @@ data class Run(
     var img: Bitmap?,
     var timestamp: Long,
     var avgSpeedInKMH: Float,
-    var distanceInMeter: Int,
-    var timeInMillis: Long,
+    var distanceInMeter: Double,
+    var time: Long,
     var caloriesBurned: Int
 ){
     @PrimaryKey(autoGenerate = true)

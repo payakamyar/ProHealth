@@ -15,9 +15,11 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.FragmentTrackingBinding
+import com.projekt.prohealth.entity.Run
 import com.projekt.prohealth.service.TrackingService
 import com.projekt.prohealth.utility.Constants
 import com.projekt.prohealth.utility.Utilities
@@ -28,6 +30,8 @@ import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import java.sql.Time
+import java.time.LocalTime
 
 
 @AndroidEntryPoint
@@ -150,7 +154,7 @@ class TrackingFragment : Fragment() {
     private fun zoomOutToCoverAll(){
         val boundingBox = BoundingBox.fromGeoPointsSafe(TrackingService.route.value)
         val center = boundingBox.centerWithDateLine
-        mapView.zoomToBoundingBox(boundingBox,true)
+        mapView.zoomToBoundingBox(boundingBox,true,200)
         mapView.controller.setCenter(center)
         locationManager.removeUpdates(setMarkerLocationListener)
         try{
@@ -187,7 +191,9 @@ class TrackingFragment : Fragment() {
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_PAUSE_SERVICE }
                     )
                 } else{
-                    //save here
+                    mainViewModel.insertRun(Run(takeSnapShotFromMap(),System.currentTimeMillis(),TrackingService.averageSpeed.toFloat()
+                        ,TrackingService.distance, TrackingService.time.value!!.second.toLong(),TrackingService.caloriesBurned))
+                    findNavController().popBackStack()
                 }
             }
             binding.rightSideButton.setOnClickListener {
