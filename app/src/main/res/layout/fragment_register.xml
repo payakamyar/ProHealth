@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.fragment.RegisterFragment">
+
+
+        <LinearLayout
+            android:id="@+id/form"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:layout_marginStart="32dp"
+            android:orientation="vertical"
+            android:theme="@style/Theme.MaterialComponents.Light">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Register"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:textSize="48sp"
+                android:layout_marginBottom="24dp"/>
+            <TextView
+                android:id="@+id/error_textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/warning"/>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="@color/palette_2"
+                app:boxStrokeColor="@color/box_stroke_color"
+                app:cursorColor="@color/white"
+                app:hintTextColor="@color/palette_3"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:textColorHint="@color/palette_5"
+                android:hint="First Name"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/name_field"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:textColor="@color/white"/>
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="@color/palette_2"
+                app:boxStrokeColor="@color/box_stroke_color"
+                app:cursorColor="@color/white"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/white"
+                app:hintTextColor="@color/palette_3"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:textColorHint="@color/palette_5"
+                android:hint="Password"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/password_field"
+                    android:inputType="textPassword"
+
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:textColor="@color/white"/>
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="@color/palette_2"
+                app:boxStrokeColor="@color/box_stroke_color"
+                app:cursorColor="@color/white"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/white"
+                app:hintTextColor="@color/palette_3"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:textColorHint="@color/palette_5"
+                android:hint="Repeat Password"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/repeat_password_field"
+                    android:inputType="textPassword"
+
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:textColor="@color/white"/>
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="@color/palette_2"
+                app:boxStrokeColor="@color/box_stroke_color"
+                app:cursorColor="@color/white"
+                app:endIconTint="@color/white"
+                app:hintTextColor="@color/palette_3"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:textColorHint="@color/palette_5"
+                android:hint="E-Mail"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/email_field"
+                    android:inputType="textEmailAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:textColor="@color/white"/>
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="@color/palette_2"
+                app:boxStrokeColor="@color/box_stroke_color"
+                app:cursorColor="@color/white"
+                app:endIconTint="@color/white"
+                app:hintTextColor="@color/palette_3"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:textColorHint="@color/palette_5"
+                android:hint="Repeat E-Mail"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/repeat_email_field"
+                    android:inputType="textEmailAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:textColor="@color/white"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/register_btn"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                app:backgroundTint="@color/palette_3"
+                android:text="Register"/>
+        </LinearLayout>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

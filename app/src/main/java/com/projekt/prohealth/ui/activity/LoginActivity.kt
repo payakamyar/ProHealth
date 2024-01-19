@@ -1,12 +1,14 @@
-package com.projekt.prohealth.ui.fragment
+package com.projekt.prohealth.ui.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.projekt.prohealth.R
+import dagger.hilt.android.AndroidEntryPoint
 
-class SplashActivity : AppCompatActivity() {
+@AndroidEntryPoint
+class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        setContentView(R.layout.activity_login)
     }
 }

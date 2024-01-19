@@ -6,6 +6,8 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -84,5 +86,25 @@ object Utilities {
             return "${if (hour<10) "0$hour" else "$hour"}:${if (min<10) "0$min" else "$min"}:${if(sec<10) "0$sec" else "$sec"}"
         }
         return "00:00:00"
+    }
+
+    fun hasNetworkConnection(context: Context):Boolean{
+        val connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            val activeNetwork = connectivityManager.activeNetwork ?: return false
+            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+
+            return when{
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        }else{
+            val activeNetwork = connectivityManager.activeNetworkInfo
+            return activeNetwork != null && activeNetwork.isConnected
+        }
+
     }
 }

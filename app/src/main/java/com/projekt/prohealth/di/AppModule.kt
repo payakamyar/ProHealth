@@ -3,6 +3,9 @@ package com.projekt.prohealth.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.projekt.prohealth.db.RunDao
 import com.projekt.prohealth.db.RunDatabase
 import com.projekt.prohealth.utility.Constants
@@ -36,5 +39,10 @@ object AppModule {
     @Provides
     fun provideSharedPreferences(@ApplicationContext context: Context):SharedPreferences =
         context.getSharedPreferences(Constants.SHARED_PREFERENCES_NAME,Context.MODE_PRIVATE)
+
+    @Singleton
+    @Provides
+    fun provideFirebaseAuth():FirebaseAuth =
+        Firebase.auth
 
 }

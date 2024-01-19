@@ -3,18 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.projekt.prohealth">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".application.BaseApplication"
         android:allowBackup="true"
-        tools:replace="android:allowBackup"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -22,24 +21,32 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ProHealth"
+        tools:replace="android:allowBackup"
         tools:targetApi="31">
         <activity
-            android:name=".ui.fragment.SplashActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.activity.MainActivity"
+            android:name=".ui.activity.LoginActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:theme="@style/Theme.ProHealth.NoActionbar"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity
+            android:name=".ui.activity.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ProHealth.NoActionbar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustPan"></activity>
 
-        <service android:name=".service.TrackingService"
-            android:foregroundServiceType="location"/>
-
+        <service
+            android:name=".service.TrackingService"
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

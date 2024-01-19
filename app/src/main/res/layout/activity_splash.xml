@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.fragment.SplashActivity"
+    tools:context=".ui.activity.SplashActivity"
     android:background="@color/palette_2">
 
 <LinearLayout
@@ -29,6 +29,40 @@
         android:layout_gravity="center"
         android:textSize="32sp"
         android:textColor="@color/white"/>
-</LinearLayout>
+    <pl.droidsonroids.gif.GifImageView
+        android:id="@+id/loading_gif"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/loading"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"/>
+    <LinearLayout
+        android:id="@+id/no_connection_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You don't have an active connection."/>
+        <Button
+            android:id="@+id/retry_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:backgroundTint="@color/palette_3"
+            android:layout_gravity="center"
+            android:text="retry"/>
+        <TextView
+            android:id="@+id/offline_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="or continue offline"
+            android:layout_gravity="center"
+            android:textColor="@color/palette_4"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+</LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
