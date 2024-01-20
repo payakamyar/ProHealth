@@ -8,12 +8,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.projekt.prohealth.R
+import com.projekt.prohealth.databinding.ActivityLoginBinding
 import com.projekt.prohealth.databinding.FragmentLoginBinding
 import com.projekt.prohealth.ui.activity.MainActivity
 import com.projekt.prohealth.utility.InputValidation
@@ -37,8 +39,10 @@ class LoginFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         setFragmentResultListener("register"){_,result ->
-            if(result.getBoolean("isRegistered"))
+            if(result.getBoolean("isRegistered")){
                 showAlertDialog()
+                requireActivity().findViewById<ConstraintLayout>(R.id.login_root).alpha = 0.5f
+            }
         }
     }
 
@@ -90,9 +94,13 @@ class LoginFragment : Fragment() {
     }
 
     private fun showAlertDialog(){
-        val view = layoutInflater.inflate(R.layout.registered_dialog,binding.root)
-        val dialog = AlertDialog.Builder(requireContext()).setView(view).create().apply {
-            view.findViewById<Button>(R.id.ok_btn).setOnClickListener { this.dismiss() }
+        val view = layoutInflater.inflate(R.layout.registered_dialog,null)
+        val dialog = AlertDialog.Builder(requireContext()).setView(view)
+            .setCancelable(false).create().apply {
+            view.findViewById<Button>(R.id.ok_btn).setOnClickListener {
+                requireActivity().findViewById<ConstraintLayout>(R.id.login_root).alpha = 1f
+                this.dismiss()
+            }
         }
         dialog.show()
     }

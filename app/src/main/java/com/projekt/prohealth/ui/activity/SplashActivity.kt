@@ -5,11 +5,15 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.projekt.prohealth.R
 import com.projekt.prohealth.databinding.ActivitySplashBinding
 import com.projekt.prohealth.utility.Utilities
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @SuppressLint("CustomSplashScreen")
@@ -26,12 +30,16 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun setup(){
+        lifecycleScope.launch(Dispatchers.Main) {
+            delay(2000)
+            login()
+        }
         binding.apply {
             retryBtn.setOnClickListener {
                 login()
             }
             offlineTv.setOnClickListener {
-
+                startActivity(Intent(this@SplashActivity,MainActivity::class.java))
             }
         }
     }

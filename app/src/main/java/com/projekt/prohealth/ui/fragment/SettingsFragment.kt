@@ -3,6 +3,7 @@ package com.projekt.prohealth.ui.fragment
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -38,7 +39,8 @@ class SettingsFragment : Fragment() {
             }else{
                 loginBtn.visibility = View.GONE
                 logoutBtn.visibility = View.VISIBLE
-                nameTv.text = "Hi ${auth.currentUser!!.displayName}"
+                Log.i("name", auth.currentUser!!.displayName.toString())
+                nameTv.text = "Hi ${auth.currentUser!!.displayName.toString()}"
             }
             logoutBtn.setOnClickListener {
                 auth.signOut()

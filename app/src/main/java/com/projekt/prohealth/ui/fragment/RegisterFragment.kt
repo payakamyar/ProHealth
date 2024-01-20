@@ -6,7 +6,9 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.projekt.prohealth.R
@@ -44,12 +46,13 @@ class RegisterFragment : Fragment() {
         if(validateInputs()){
             auth.createUserWithEmailAndPassword(binding.emailField.text.toString(),binding.passwordField.text.toString()).addOnCompleteListener {
                 if(it.isSuccessful){
-                    val changeRequest = UserProfileChangeRequest.Builder()
-                    changeRequest.apply {
+                    val changeRequest = UserProfileChangeRequest.Builder().apply {
                         displayName = binding.nameField.text.toString()
-                        build()
-                        findNavController().popBackStack()
-                    }
+                    }.build()
+                    auth.currentUser!!.updateProfile(changeRequest)
+                    auth.signOut()
+                    setFragmentResult("register",Bundle().apply {putBoolean("isRegistered",true)})
+                    findNavController().popBackStack()
                 }
                 else{
                     binding.errorTextview.text = it.exception!!.message
