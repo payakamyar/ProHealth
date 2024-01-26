@@ -191,9 +191,13 @@ class TrackingFragment : Fragment() {
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_PAUSE_SERVICE }
                     )
                 } else{
-                    mainViewModel.insertRun(Run(takeSnapShotFromMap(),System.currentTimeMillis(),TrackingService.averageSpeed.toFloat()
+                    mainViewModel.insertRun(Run(Utilities.bitmapToByteArray(takeSnapShotFromMap()),System.currentTimeMillis(),TrackingService.averageSpeed.toFloat()
                         ,TrackingService.distance, TrackingService.time.value!!.second.toLong(),TrackingService.caloriesBurned))
+                    requireContext().startService(
+                        Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_STOP_SERVICE }
+                    )
                     findNavController().popBackStack()
+                    onDestroy()
                 }
             }
             binding.rightSideButton.setOnClickListener {
@@ -202,7 +206,11 @@ class TrackingFragment : Fragment() {
                         Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_DEEP_PAUSE_SERVICE}
                     )
                 } else{
-                    //discard here
+                    requireContext().startService(
+                        Intent(requireContext(),TrackingService::class.java).also { current-> current.action = Constants.ACTION_STOP_SERVICE }
+                    )
+                    findNavController().popBackStack()
+                    onDestroy()
                 }
             }
         }

@@ -58,7 +58,9 @@ class RunAdapter: RecyclerView.Adapter<RunAdapter.ViewHolder>() {
 
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.mapImage.setImageBitmap(differ.currentList[position].img)
+        differ.currentList[position].img?.let {
+            holder.mapImage.setImageBitmap(Utilities.byteArrayToBitmap(it))
+        }
         val date = Date(differ.currentList[position].timestamp)
         val format = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
         val formattedDate = format.format(date)
